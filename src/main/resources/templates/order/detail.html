@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết đơn hàng - Camera Store</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+</head>
+<body>
+    <div th:replace="~{layout :: header}"></div>
+
+    <div class="container my-5">
+        <div class="row">
+            <div class="col-lg-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/}">Trang chủ</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/order/history}">Lịch sử đơn hàng</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Chi tiết đơn hàng</li>
+                    </ol>
+                </nav>
+
+                <h2 class="mb-4">Chi tiết đơn hàng #<span th:text="${order != null ? order.id : ''}">1</span></h2>
+
+                <!-- Error Message -->
+                <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+                <!-- Order not found -->
+                <div th:if="${order == null}" class="text-center py-5">
+                    <i class="fas fa-exclamation-triangle fa-4x text-muted mb-3"></i>
+                    <h4>Không tìm thấy đơn hàng</h4>
+                    <p class="text-muted">Đơn hàng không tồn tại hoặc bạn không có quyền xem đơn hàng này</p>
+                    <a th:href="@{/order/history}" class="btn btn-primary">Quay lại lịch sử đơn hàng</a>
+                </div>
+
+                <!-- Order Details -->
+                <div th:if="${order != null}">
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <!-- Order Info Card -->
+                            <div class="card mb-4">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">Thông tin đơn hàng</h5>
+                                    <span th:switch="${order.status}">
+                                        <span th:case="'PENDING'" class="badge bg-warning">Chờ xác nhận</span>
+                                        <span th:case="'CONFIRMED'" class="badge bg-info">Đã xác nhận</span>
+                                        <span th:case="'PROCESSING'" class="badge bg-primary">Đang xử lý</span>
+                                        <span th:case="'SHIPPING'" class="badge bg-secondary">Đang giao hàng</span>
+                                        <span th:case="'DELIVERED'" class="badge bg-success">Đã giao hàng</span>
+                                        <span th:case="'CANCELLED'" class="badge bg-danger">Đã hủy</span>
+                                        <span th:case="*" class="badge bg-light text-dark" th:text="${order.status}">Trạng thái</span>
+                                    </span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <p><strong>Ngày đặt hàng:</strong> <span th:text="${#temporals.format(order.orderDate, 'dd/MM/yyyy HH:mm')}">01/01/2024 10:00</span></p>
+                                            <p><strong>Họ tên:</strong> <span th:text="${order.fullName}">Tên khách hàng</span></p>
+                                            <p><strong>Số điện thoại:</strong> <span th:text="${order.phoneNumber}">0123456789</span></p>
+                                            <p><strong>Email:</strong> <span th:text="${order.email}">email@example.com</span></p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p><strong>Địa chỉ giao hàng:</strong><br>
+                                                <span th:text="${order.shippingAddress}">Địa chỉ giao hàng</span>
+                                            </p>
+                                            <p><strong>Phương thức thanh toán:</strong>
+                                                <span th:switch="${order.paymentMethod}">
+                                                    <span th:case="'COD'">Thanh toán khi nhận hàng</span>
+                                                    <span th:case="'BANK_TRANSFER'">Chuyển khoản ngân hàng</span>
+                                                    <span th:case="'MOMO'">Ví điện tử MoMo</span>
+                                                    <span th:case="*" th:text="${order.paymentMethod}">Phương thức khác</span>
+                                                </span>
+                                            </p>
+                                            <p th:if="${order.notes != null and !#strings.isEmpty(order.notes)}">
+                                                <strong>Ghi chú:</strong><br>
+                                                <span th:text="${order.notes}">Ghi chú đơn hàng</span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Order Items -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Sản phẩm đã đặt</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered">
+                                            <thead>
+                                                <tr>
+                                                    <th>STT</th>
+                                                    <th>Sản phẩm</th>
+                                                    <th>Danh mục</th>
+                                                    <th>Đơn giá</th>
+                                                    <th>Số lượng</th>
+                                                    <th>Thành tiền</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr th:if="${order.orderItems == null or #lists.isEmpty(order.orderItems)}">
+                                                    <td colspan="6" class="text-center text-muted">Không có sản phẩm nào trong đơn hàng</td>
+                                                </tr>
+                                                <tr th:each="item, iterStat : ${order.orderItems}" th:if="${order.orderItems != null}">
+                                                    <td th:text="${iterStat.count}">1</td>
+                                                    <td>
+                                                        <div class="d-flex align-items-center">
+                                                            <img th:src="${item.camera != null and item.camera.imageUrl != null and !#strings.isEmpty(item.camera.imageUrl) ? (item.camera.imageUrl.startsWith('http') ? item.camera.imageUrl : (item.camera.imageUrl.startsWith('/images/') ? item.camera.imageUrl : '/images/cameras/' + item.camera.imageUrl)) : '/images/default-camera.svg'}" 
+                                                                 th:alt="${item.camera != null ? item.camera.name : 'Sản phẩm không tồn tại'}"
+                                                                 class="order-item-img me-3"
+                                                                 title="Hình ảnh sản phẩm"
+                                                                 onerror="this.src='/images/default-camera.svg'">
+                                                            <div>
+                                                                <h6 class="mb-1" th:text="${item.camera != null ? item.camera.name : 'Sản phẩm không tồn tại'}">Tên camera</h6>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td th:text="${item.camera != null and item.camera.category != null ? item.camera.category.name : 'N/A'}">Danh mục</td>
+                                                    <td th:text="${item.price != null ? #numbers.formatCurrency(item.price) : '0 ₫'}">0 ₫</td>
+                                                    <td th:text="${item.quantity}">1</td>
+                                                    <td th:text="${item.price != null and item.quantity != null ? #numbers.formatCurrency(item.price * item.quantity) : '0 ₫'}">0 ₫</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-4">
+                            <!-- Order Summary -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Tóm tắt đơn hàng</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Tạm tính:</span>
+                                        <span th:text="${#numbers.formatCurrency(order.totalAmount)}">0 ₫</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Phí vận chuyển:</span>
+                                        <span>Miễn phí</span>
+                                    </div>
+                                    <hr>
+                                    <div class="d-flex justify-content-between mb-3">
+                                        <strong>Tổng cộng:</strong>
+                                        <strong class="text-primary" th:text="${#numbers.formatCurrency(order.totalAmount)}">0 ₫</strong>
+                                    </div>
+                                    
+                                    <div class="d-grid gap-2">
+                                        <a th:href="@{/order/history}" class="btn btn-outline-primary">
+                                            <i class="fas fa-arrow-left me-2"></i>Quay lại lịch sử
+                                        </a>
+                                        <a th:href="@{/shop}" class="btn btn-primary">
+                                            <i class="fas fa-shopping-bag me-2"></i>Tiếp tục mua sắm
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{layout :: footer}"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        .order-item-img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+    </style>
+</body>
+</html>

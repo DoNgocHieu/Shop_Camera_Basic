@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thanh toán - Camera Store</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+</head>
+
+
+<body>
+    <div th:replace="~{layout :: header}"></div>
+
+    <div class="container my-5">
+        <div class="row">
+            <div class="col-lg-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/}">Trang chủ</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/cart}">Giỏ hàng</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Thanh toán</li>
+                    </ol>
+                </nav>
+
+                <h2 class="mb-4">Thanh toán đơn hàng</h2>
+
+                <form th:action="@{/order/checkout}" method="post" th:object="${orderRequest}">
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <!-- Thông tin giao hàng -->
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h5 class="mb-0"><i class="fas fa-truck me-2"></i>Thông tin giao hàng</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="fullName" class="form-label">Họ và tên *</label>
+                                            <input type="text" class="form-control" id="fullName" 
+                                                   th:field="*{fullName}" required>
+                                            <div class="invalid-feedback" th:if="${#fields.hasErrors('fullName')}" 
+                                                 th:errors="*{fullName}"></div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="phone" class="form-label">Số điện thoại *</label>
+                                            <input type="tel" class="form-control" id="phone" 
+                                                   th:field="*{phone}" required>
+                                            <div class="invalid-feedback" th:if="${#fields.hasErrors('phone')}" 
+                                                 th:errors="*{phone}"></div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="email" class="form-label">Email</label>
+                                        <input type="email" class="form-control" id="email" 
+                                               th:field="*{email}">
+                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('email')}" 
+                                             th:errors="*{email}"></div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="address" class="form-label">Địa chỉ giao hàng *</label>
+                                        <div class="input-group">
+                                            <textarea class="form-control" id="address" rows="3" 
+                                                      th:field="*{address}" required 
+                                                      placeholder="Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố"></textarea>
+                                            <button type="button" class="btn btn-outline-secondary" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#mapModal"
+                                                    title="Chọn địa chỉ trên bản đồ">
+                                                <i class="fas fa-map-marker-alt"></i>
+                                            </button>
+                                        </div>
+                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('address')}" 
+                                             th:errors="*{address}"></div>
+                                        <small class="form-text text-muted">Bấm vào biểu tượng bản đồ để chọn địa chỉ chính xác</small>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="notes" class="form-label">Ghi chú đơn hàng</label>
+                                        <textarea class="form-control" id="notes" rows="2" 
+                                                  th:field="*{notes}" 
+                                                  placeholder="Ghi chú về đơn hàng, ví dụ: thời gian hay chỉ dẫn địa điểm giao hàng chi tiết hơn."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Phương thức thanh toán -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0"><i class="fas fa-credit-card me-2"></i>Phương thức thanh toán</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="radio" name="paymentMethod" 
+                                               id="cod" value="COD" checked th:field="*{paymentMethod}">
+                                        <label class="form-check-label" for="cod">
+                                            <i class="fas fa-money-bill-wave me-2"></i>
+                                            Thanh toán khi nhận hàng (COD)
+                                        </label>
+                                        <small class="d-block text-muted mt-1">
+                                            Thanh toán bằng tiền mặt khi nhận được hàng
+                                        </small>
+                                    </div>
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="radio" name="paymentMethod" 
+                                               id="bank" value="BANK_TRANSFER" th:field="*{paymentMethod}">
+                                        <label class="form-check-label" for="bank">
+                                            <i class="fas fa-university me-2"></i>
+                                            Chuyển khoản ngân hàng
+                                        </label>
+                                        <small class="d-block text-muted mt-1">
+                                            Chuyển khoản trước khi giao hàng
+                                        </small>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="paymentMethod" 
+                                               id="momo" value="MOMO" th:field="*{paymentMethod}">
+                                        <label class="form-check-label" for="momo">
+                                            <i class="fab fa-cc-paypal me-2"></i>
+                                            Ví điện tử MoMo
+                                        </label>
+                                        <small class="d-block text-muted mt-1">
+                                            Thanh toán qua ví điện tử MoMo
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-4">
+                            <!-- Đơn hàng của bạn -->
+                            <div class="card ">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Đơn hàng của bạn</h5>
+                                </div>
+                                <div class="card-body">
+                                    <!-- Empty state -->
+                                    <div th:if="${#lists.isEmpty(cartItems)}" class="text-center py-4">
+                                        <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                                        <h5>Không có sản phẩm nào</h5>
+                                        <p class="text-muted">Giỏ hàng của bạn đang trống</p>
+                                        <a th:href="@{/shop}" class="btn btn-primary">Tiếp tục mua sắm</a>
+                                    </div>
+                                    
+                                    <!-- Cart items -->
+                                    <div th:unless="${#lists.isEmpty(cartItems)}" class="order-summary">
+                                        <div th:each="item : ${cartItems}" class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+                                            <div class="d-flex align-items-center">
+                                                <img th:src="${item.camera != null and item.camera.imageUrl != null and !#strings.isEmpty(item.camera.imageUrl) ? (item.camera.imageUrl.startsWith('http') ? item.camera.imageUrl : (item.camera.imageUrl.startsWith('/images/') ? item.camera.imageUrl : '/images/cameras/' + item.camera.imageUrl)) : '/images/default-camera.svg'}" 
+                                                     th:alt="${item.camera != null ? item.camera.name : 'Sản phẩm không tồn tại'}"
+                                                     class="order-item-img me-3"
+                                                     title="Hình ảnh sản phẩm"
+                                                     onerror="this.src='/images/default-camera.svg'"
+                                                     data-camera-image="true"
+                                                     th:data-original-url="${item.camera != null ? item.camera.imageUrl : ''}">
+                                                <div>
+                                                    <h6 class="mb-1" th:text="${item.camera != null ? item.camera.name : 'Sản phẩm không tồn tại'}">Tên camera</h6>
+                                                    <small class="text-muted">
+                                                        Số lượng: <span th:text="${item.quantity}">1</span>
+                                                    </small>
+                                                </div>
+                                            </div>
+                                            <div class="text-end">
+                                                <span th:text="${item.camera != null ? #numbers.formatCurrency(item.camera.price * item.quantity) : '0 ₫'}">0 ₫</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div th:unless="${#lists.isEmpty(cartItems)}" class="order-total">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Tạm tính:</span>
+                                            <span th:text="${#numbers.formatCurrency(total)}">0 ₫</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Phí vận chuyển:</span>
+                                            <span>Miễn phí</span>
+                                        </div>
+                                        <hr>
+                                        <div class="d-flex justify-content-between mb-3">
+                                            <strong>Tổng cộng:</strong>
+                                            <strong class="text-primary" th:text="${#numbers.formatCurrency(total)}">0 ₫</strong>
+                                        </div>
+                                    </div>
+
+                                    <button th:unless="${#lists.isEmpty(cartItems)}" type="submit" class="btn btn-primary w-100 btn-lg">
+                                        <i class="fas fa-check me-2"></i>Đặt hàng
+                                    </button>
+
+                                    <div class="text-center mt-3">
+                                        <small class="text-muted">
+                                            <i class="fas fa-shield-alt me-1"></i>
+                                            Đơn hàng của bạn được bảo mật
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Ưu đãi -->
+                            <div class="card mt-3">
+                                <div class="card-body text-center">
+                                    <h6 class="text-success">🎉 Ưu đãi đặc biệt</h6>
+                                    <p class="mb-2">✅ Miễn phí vận chuyển toàn quốc</p>
+                                    <p class="mb-2">✅ Đổi trả miễn phí trong 30 ngày</p>
+                                    <p class="mb-2">✅ Bảo hành chính hãng 2 năm</p>
+                                    <p class="mb-0">✅ Hỗ trợ kỹ thuật 24/7</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{layout :: footer}"></div>
+
+    <!-- Map Modal -->
+    <div class="modal fade" id="mapModal" tabindex="-1" aria-labelledby="mapModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="mapModalLabel">
+                        <i class="fas fa-map-marker-alt me-2"></i>Chọn địa chỉ giao hàng
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="searchAddress" class="form-label">Tìm kiếm địa chỉ:</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="searchAddress" 
+                                   placeholder="Nhập địa chỉ để tìm kiếm...">
+                            <button type="button" class="btn btn-primary" onclick="searchLocation()">
+                                <i class="fas fa-search"></i> Tìm
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Map Container -->
+                    <div id="map" style="height: 400px; width: 100%; border-radius: 8px; border: 2px solid #dee2e6;"></div>
+                    
+                    <div class="mt-3">
+                        <label for="selectedAddress" class="form-label">Địa chỉ đã chọn:</label>
+                        <textarea class="form-control" id="selectedAddress" rows="2" readonly 
+                                  placeholder="Địa chỉ sẽ hiển thị khi bạn chọn vị trí trên bản đồ"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-primary" onclick="confirmAddress()">
+                        <i class="fas fa-check me-2"></i>Xác nhận địa chỉ
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="/js/script.js"></script>
+    
+    <!-- Leaflet CSS and JS for Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        let map;
+        let marker;
+        let selectedLatLng = null;
+
+        // Initialize map when modal is shown
+        document.getElementById('mapModal').addEventListener('shown.bs.modal', function () {
+            if (!map) {
+                initMap();
+            } else {
+                setTimeout(() => {
+                    map.invalidateSize();
+                }, 100);
+            }
+        });
+
+        function initMap() {
+            // Default location: Hanoi, Vietnam
+            const defaultLat = 21.0285;
+            const defaultLng = 105.8542;
+
+            map = L.map('map').setView([defaultLat, defaultLng], 13);
+
+            // Add OpenStreetMap tiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            // Add click event to map
+            map.on('click', function(e) {
+                addMarker(e.latlng.lat, e.latlng.lng);
+                getAddressFromCoords(e.latlng.lat, e.latlng.lng);
+            });
+
+            // Try to get user's current location
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const userLat = position.coords.latitude;
+                    const userLng = position.coords.longitude;
+                    map.setView([userLat, userLng], 15);
+                    addMarker(userLat, userLng);
+                    getAddressFromCoords(userLat, userLng);
+                });
+            }
+        }
+
+        function addMarker(lat, lng) {
+            if (marker) {
+                map.removeLayer(marker);
+            }
+            
+            marker = L.marker([lat, lng], {
+                draggable: true
+            }).addTo(map);
+
+            selectedLatLng = { lat: lat, lng: lng };
+
+            // Add drag event to marker
+            marker.on('dragend', function(e) {
+                const position = e.target.getLatLng();
+                selectedLatLng = { lat: position.lat, lng: position.lng };
+                getAddressFromCoords(position.lat, position.lng);
+            });
+        }
+
+        function searchLocation() {
+            const query = document.getElementById('searchAddress').value.trim();
+            if (!query) {
+                alert('Vui lòng nhập địa chỉ để tìm kiếm');
+                return;
+            }
+
+            // Use Nominatim API for geocoding
+            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=vn&limit=1`;
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        const result = data[0];
+                        const lat = parseFloat(result.lat);
+                        const lng = parseFloat(result.lon);
+                        
+                        map.setView([lat, lng], 16);
+                        addMarker(lat, lng);
+                        document.getElementById('selectedAddress').value = result.display_name;
+                        selectedLatLng = { lat: lat, lng: lng };
+                    } else {
+                        alert('Không tìm thấy địa chỉ. Vui lòng thử lại với từ khóa khác.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Có lỗi xảy ra khi tìm kiếm địa chỉ.');
+                });
+        }
+
+        function getAddressFromCoords(lat, lng) {
+            // Reverse geocoding using Nominatim
+            const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`;
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.display_name) {
+                        document.getElementById('selectedAddress').value = data.display_name;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('selectedAddress').value = `Tọa độ: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                });
+        }
+
+        function confirmAddress() {
+            const selectedAddress = document.getElementById('selectedAddress').value.trim();
+            if (!selectedAddress) {
+                alert('Vui lòng chọn một địa chỉ trên bản đồ');
+                return;
+            }
+
+            // Update the main address field
+            document.getElementById('address').value = selectedAddress;
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('mapModal'));
+            modal.hide();
+            
+            // Show success message
+            alert('Đã cập nhật địa chỉ thành công!');
+        }
+
+        // Allow Enter key in search
+        document.getElementById('searchAddress').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                searchLocation();
+            }
+        });
+    </script>
+    
+    <style>
+        .order-item-img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .order-summary {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .order-total {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #dee2e6;
+        }
+        
+        /* Map modal styles */
+        #map {
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+        }
+        
+        .leaflet-popup-content {
+            font-family: inherit;
+        }
+        
+        /* Input group with map button */
+        .input-group .btn {
+            border-left: 1px solid #ced4da;
+        }
+        
+        .form-text {
+            font-size: 0.875rem;
+        }
+        
+        /* Loading states */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        
+        /* Make modal responsive */
+        @media (max-width: 768px) {
+            .modal-lg {
+                max-width: 95%;
+            }
+            
+            #map {
+                height: 300px;
+            }
+        }
+    </style>
+</body>
+</html>

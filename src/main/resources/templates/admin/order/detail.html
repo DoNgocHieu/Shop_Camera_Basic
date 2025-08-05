@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết đơn hàng - Camera</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+</head>
+<body>
+    <!-- Admin Header -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" th:href="@{/admin}">
+                <i class="fas fa-crown me-2"></i>Admin - Camera
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarAdmin" title="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarAdmin">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/admin}">
+                            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" th:href="@{/admin/cameras}">
+                            <i class="fas fa-camera me-1"></i>Quản lý camera
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/admin/categories}">
+                            <i class="fas fa-tags me-1"></i>Quản lý danh mục
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/admin/orders}">
+                            <i class="fas fa-shopping-cart me-1"></i>Quản lý đơn hàng
+                        </a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/}">
+                            <i class="fas fa-external-link-alt me-1"></i>Xem website
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/logout}">
+                            <i class="fas fa-sign-out-alt me-1"></i>Đăng xuất
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid my-4">
+        <div class="row">
+            <div class="col-12">
+                <!-- Breadcrumb -->
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/admin}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/admin/orders}">Quản lý đơn hàng</a></li>
+                        <li class="breadcrumb-item active">Chi tiết đơn hàng #<span th:text="${order != null ? order.id : 'N/A'}">1</span></li>
+                    </ol>
+                </nav>
+
+                <!-- Error Message -->
+                <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <span th:text="${errorMessage}">Error message</span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    <div class="mt-3">
+                        <a th:href="@{/admin/orders}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Quay lại danh sách đơn hàng
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Show content only if order exists -->
+                <div th:if="${order != null}">
+                    <!-- Header -->
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2>Chi tiết đơn hàng #<span th:text="${order.id}">1</span></h2>
+                        <div>
+                            <a th:href="@{/admin/orders}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Quay lại
+                            </a>
+                        </div>
+                    </div>
+
+                <!-- Order Information -->
+                <div class="row">
+                    <div class="col-md-8">
+                        <!-- Order Summary -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">Thông tin đơn hàng</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p><strong>Mã đơn hàng:</strong> #<span th:text="${order.id ?: 'N/A'}">1</span></p>
+                                        <p><strong>Ngày đặt:</strong> <span th:text="${order.orderDate != null ? #temporals.format(order.orderDate, 'dd/MM/yyyy HH:mm') : 'N/A'}">01/01/2024 10:00</span></p>
+                                        <p><strong>Số lượng máy ảnh:</strong> <span th:text="${order.orderItems != null ? #lists.size(order.orderItems) : 0}">0</span> chiếc</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p><strong>Tổng tiền:</strong> 
+                                            <span class="fw-bold text-primary fs-4" th:text="${order.totalAmount != null ? (#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT') + ' ₫') : '0 ₫'}">2,000,000 ₫</span>
+                                        </p>
+                                        <p><strong>Phương thức thanh toán:</strong>
+                                            <span th:if="${order.paymentMethod != null}" th:switch="${order.paymentMethod.name()}">
+                                                <span th:case="'COD'">COD</span>
+                                                <span th:case="'BANK_TRANSFER'">Chuyển khoản</span>
+                                                <span th:case="'MOMO'">MoMo</span>
+                                                <span th:case="*" th:text="${order.paymentMethod.name()}">N/A</span>
+                                            </span>
+                                            <span th:if="${order.paymentMethod == null}">N/A</span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Order Items -->
+                        <div class="card mb-4" th:if="${order.orderItems != null and not #lists.isEmpty(order.orderItems)}">
+                            <div class="card-header">
+                                <h5 class="mb-0">Chi tiết sản phẩm</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-borderless">
+                                        <thead>
+                                            <tr>
+                                                <th>Sản phẩm</th>
+                                                <th class="text-center">Số lượng</th>
+                                                <th class="text-end">Đơn giá</th>
+                                                <th class="text-end">Thành tiền</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr th:each="item : ${order.orderItems}">
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <img th:src="${item.camera?.imageUrl != null and item.camera.imageUrl.startsWith('http') ? item.camera.imageUrl : '/images/' + (item.camera?.imageUrl ?: 'default-camera.svg')}" 
+                                                             th:alt="${item.camera?.name ?: 'Ảnh sản phẩm'}"
+                                                             class="me-3 rounded"
+                                                             style="width: 50px; height: 50px; object-fit: cover;"
+                                                             onerror="this.src='/images/default-camera.svg'">
+                                                        <div>
+                                                            <h6 class="mb-1" th:text="${item.camera?.name ?: 'Sản phẩm không xác định'}">Tên máy ảnh</h6>
+                                                            <small class="text-muted" th:text="${item.camera?.brand ?: 'N/A'}">Brand</small>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="text-center" th:text="${item.quantity ?: 0}">1</td>
+                                                <td class="text-end" th:text="${item.price != null ? (#numbers.formatDecimal(item.price, 0, 'COMMA', 0, 'POINT') + ' ₫') : '0 ₫'}">1,000,000 ₫</td>
+                                                <td class="text-end fw-bold" th:text="${(item.price != null and item.quantity != null) ? (#numbers.formatDecimal(item.price * item.quantity, 0, 'COMMA', 0, 'POINT') + ' ₫') : '0 ₫'}">1,000,000 ₫</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <!-- Order Status -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">Trạng thái đơn hàng</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <div th:switch="${order.status?.name()}">
+                                        <span th:case="'PENDING'" class="badge fs-6 bg-warning">Chờ xử lý</span>
+                                        <span th:case="'CONFIRMED'" class="badge fs-6 bg-info">Đã xác nhận</span>
+                                        <span th:case="'PROCESSING'" class="badge fs-6 bg-primary">Đang xử lý</span>
+                                        <span th:case="'SHIPPED'" class="badge fs-6 bg-secondary">Đang giao</span>
+                                        <span th:case="'DELIVERED'" class="badge fs-6 bg-success">Đã giao</span>
+                                        <span th:case="'CANCELLED'" class="badge fs-6 bg-danger">Đã hủy</span>
+                                        <span th:case="*" class="badge fs-6 bg-light text-dark">N/A</span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Update Status Form -->
+                                <form th:action="@{/admin/orders/update-status}" method="post" class="mb-3">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                    <input type="hidden" name="orderId" th:value="${order.id}">
+                                    <div class="mb-2">
+                                        <label for="status" class="form-label">Cập nhật trạng thái:</label>
+                                        <select name="status" id="status" class="form-select">
+                                            <option value="PENDING" th:selected="${order.status?.name() == 'PENDING'}">Chờ xử lý</option>
+                                            <option value="CONFIRMED" th:selected="${order.status?.name() == 'CONFIRMED'}">Đã xác nhận</option>
+                                            <option value="PROCESSING" th:selected="${order.status?.name() == 'PROCESSING'}">Đang xử lý</option>
+                                            <option value="SHIPPED" th:selected="${order.status?.name() == 'SHIPPED'}">Đang giao</option>
+                                            <option value="DELIVERED" th:selected="${order.status?.name() == 'DELIVERED'}">Đã giao</option>
+                                            <option value="CANCELLED" th:selected="${order.status?.name() == 'CANCELLED'}">Đã hủy</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-save me-1"></i>Cập nhật
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Customer Information -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">Thông tin khách hàng</h5>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Họ tên:</strong> <span th:text="${order.fullName ?: 'N/A'}">Nguyễn Văn A</span></p>
+                                <p><strong>Email:</strong> <span th:text="${order.email ?: 'N/A'}">email@example.com</span></p>
+                                <p><strong>Điện thoại:</strong> <span th:text="${order.phoneNumber ?: 'N/A'}">0123456789</span></p>
+                                <p><strong>Địa chỉ:</strong> <span th:text="${order.shippingAddress ?: 'N/A'}">123 ABC, XYZ</span></p>
+                                <div th:if="${order.notes != null and not #strings.isEmpty(order.notes)}" class="mt-3">
+                                    <strong>Ghi chú:</strong>
+                                    <p class="text-muted" th:text="${order.notes}">Ghi chú từ khách hàng</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                </div> <!-- End th:if="${order != null}" -->
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

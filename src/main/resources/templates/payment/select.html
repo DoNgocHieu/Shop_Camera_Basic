@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chọn phương thức thanh toán - Đăng Quang Watch</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div th:replace="fragments/header :: header"></div>
+
+    <div class="container mt-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a th:href="@{/}">Trang chủ</a></li>
+                <li class="breadcrumb-item"><a th:href="@{/order/history}">Lịch sử đơn hàng</a></li>
+                <li class="breadcrumb-item active">Chọn phương thức thanh toán</li>
+            </ol>
+        </nav>
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h4><i class="fas fa-credit-card"></i> Chọn phương thức thanh toán</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <strong>Đơn hàng #<span th:text="${order.id}"></span></strong><br>
+                            <span class="text-muted">Tổng tiền: </span>
+                            <span class="text-danger fw-bold" th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 3, 'POINT')} + ' đ'"></span>
+                        </div>
+
+                        <form th:action="@{/payment/process}" method="post">
+                            <input type="hidden" name="orderId" th:value="${order.id}">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="paymentMethod" value="COD" id="cod" checked>
+                                    <label class="form-check-label" for="cod">
+                                        <i class="fas fa-truck"></i> Thanh toán khi nhận hàng (COD)
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="paymentMethod" value="BANK_TRANSFER" id="bank">
+                                    <label class="form-check-label" for="bank">
+                                        <i class="fas fa-university"></i> Chuyển khoản ngân hàng
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="paymentMethod" value="MOMO" id="momo">
+                                    <label class="form-check-label" for="momo">
+                                        <i class="fas fa-mobile-alt"></i> Ví điện tử MoMo
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-check"></i> Xác nhận phương thức thanh toán
+                                </button>
+                                <a th:href="@{/order/history}" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left"></i> Quay lại lịch sử đơn hàng
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Thông tin đơn hàng</h5>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Mã đơn hàng:</strong> #<span th:text="${order.id}"></span></p>
+                        <p><strong>Ngày đặt:</strong> <span th:text="${#temporals.format(order.orderDate, 'dd/MM/yyyy HH:mm')}"></span></p>
+                        <p><strong>Trạng thái:</strong> 
+                            <span class="badge bg-warning" th:if="${order.status.name() == 'PENDING'}" th:text="'Chờ xác nhận'"></span>
+                            <span class="badge bg-info" th:if="${order.status.name() == 'CONFIRMED'}" th:text="'Đã xác nhận'"></span>
+                            <span class="badge bg-primary" th:if="${order.status.name() == 'PROCESSING'}" th:text="'Đang xử lý'"></span>
+                            <span class="badge bg-warning" th:if="${order.status.name() == 'SHIPPED'}" th:text="'Đang giao'"></span>
+                            <span class="badge bg-success" th:if="${order.status.name() == 'DELIVERED'}" th:text="'Đã giao'"></span>
+                            <span class="badge bg-danger" th:if="${order.status.name() == 'CANCELLED'}" th:text="'Đã hủy'"></span>
+                        </p>
+                        <p><strong>Địa chỉ giao hàng:</strong> <span th:text="${order.shippingAddress}"></span></p>
+                        <hr>
+                        <p class="mb-0"><strong>Tổng tiền:</strong> 
+                            <span class="text-danger fw-bold" th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 3, 'POINT')} + ' đ'"></span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="fragments/footer :: footer"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <title>Quản lý camera - Camera</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+</head>
+<body>
+    <!-- Admin Header -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" th:href="@{/admin}">
+                <i class="fas fa-crown me-2"></i>Admin - Camera
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarAdmin" title="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarAdmin">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/admin}">
+                            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" th:href="@{/admin/cameras}">
+                            <i class="fas fa-camera me-1"></i>Quản lý camera
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/admin/categories}">
+                            <i class="fas fa-tags me-1"></i>Quản lý danh mục
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/admin/orders}">
+                            <i class="fas fa-shopping-cart me-1"></i>Quản lý đơn hàng
+                        </a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/}">
+                            <i class="fas fa-external-link-alt me-1"></i>Xem website
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <form th:action="@{/logout}" method="post" style="display: inline;">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <button type="submit" class="nav-link btn btn-link text-start" style="border: none; background: none; color: rgba(255,255,255,.55);">
+                                <i class="fas fa-sign-out-alt me-1"></i>Đăng xuất
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid my-4">
+        <div class="row">
+            <div class="col-12">
+                <!-- Header -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2>Quản lý camera</h2>
+                    <a th:href="@{/admin/cameras/add}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Thêm camera mới
+                    </a>
+                </div>
+
+                <!-- Error Message -->
+                <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <span th:text="${errorMessage}">Error message</span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+
+                <!-- Success Message -->
+                <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <span th:text="${successMessage}">Success message</span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+
+                <!-- Filters -->
+                <!-- <div class="card mb-4">
+                    <div class="card-body">
+                        <form th:action="@{/admin/watches}" method="get" class="row g-3">
+                            <div class="col-md-4">
+                                <label for="search" class="form-label">Tìm kiếm</label>
+                                <input type="text" class="form-control" id="search" name="search" 
+                                       th:value="${param.search}" placeholder="Tên camera, thương hiệu...">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="categoryId" class="form-label">Danh mục</label>
+                                <select class="form-select" id="categoryId" name="categoryId">
+                                    <option value="">Tất cả danh mục</option>
+                                    <option th:each="category : ${categories}" 
+                                            th:if="${category != null}"
+                                            th:value="${category.id}" 
+                                            th:text="${category.name ?: 'N/A'}"
+                                            th:selected="${param.categoryId != null && param.categoryId[0] == category.id.toString()}">
+                                        Danh mục
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="priceRange" class="form-label">Khoảng giá</label>
+                                <select class="form-select" id="priceRange" name="priceRange">
+                                    <option value="">Tất cả</option>
+                                    <option value="0-1000000" th:selected="${param.priceRange != null && param.priceRange[0] == '0-1000000'}">Dưới 1 triệu</option>
+                                    <option value="1000000-5000000" th:selected="${param.priceRange != null && param.priceRange[0] == '1000000-5000000'}">1-5 triệu</option>
+                                    <option value="5000000-10000000" th:selected="${param.priceRange != null && param.priceRange[0] == '5000000-10000000'}">5-10 triệu</option>
+                                    <option value="10000000-999999999" th:selected="${param.priceRange != null && param.priceRange[0] == '10000000-999999999'}">Trên 10 triệu</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label d-block">&nbsp;</label>
+                                <button type="submit" class="btn btn-outline-primary w-100">
+                                    <i class="fas fa-search me-1"></i>Tìm kiếm
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div> -->
+
+                <!-- Watch List -->
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            Danh sách camera 
+                            <span class="badge bg-secondary" th:text="${totalCameras}">0</span>
+                        </h5>
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="viewType" id="gridView" autocomplete="off" checked
+                                   title="Xem dạng lưới" aria-label="Xem dạng lưới">
+                            <label class="btn btn-outline-secondary btn-sm" for="gridView" title="Xem dạng lưới">
+                                <i class="fas fa-th"></i>
+                            </label>
+                            <input type="radio" class="btn-check" name="viewType" id="listView" autocomplete="off"
+                                   title="Xem dạng bảng" aria-label="Xem dạng bảng">
+                            <label class="btn btn-outline-secondary btn-sm" for="listView" title="Xem dạng bảng">
+                                <i class="fas fa-list"></i>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${#lists.isEmpty(cameras)}" class="text-center py-5">
+                            <i class="fas fa-camera fa-4x text-muted mb-3"></i>
+                            <h4>Không tìm thấy camera nào</h4>
+                            <p class="text-muted">Thử điều chỉnh bộ lọc hoặc thêm camera mới</p>
+                        </div>
+
+                        <!-- Grid View -->
+                        <div id="gridViewContent" th:unless="${#lists.isEmpty(cameras)}">
+                            <div class="row">
+                                <div th:each="camera : ${cameras}" class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                                    <div class="card h-100">
+                                        <div class="position-relative">
+                                            <img th:src="${camera.imageUrl != null and !#strings.isEmpty(camera.imageUrl) ? (camera.imageUrl.startsWith('http') ? camera.imageUrl : (camera.imageUrl.startsWith('/images/') ? camera.imageUrl : '/images/cameras/' + camera.imageUrl)) : '/images/default-camera.svg'}" 
+                                                 th:alt="${camera.name}"
+                                                 class="card-img-top camera-image"
+                                                 title="Hình ảnh sản phẩm"
+                                                 onerror="this.onerror=null;this.src='/images/default-camera.svg';"
+                                                 th:data-original-url="${camera.imageUrl}">
+                                            <div class="position-absolute top-0 end-0 p-2 d-flex flex-column align-items-end gap-1">
+                                                <button class="btn btn-sm"
+                                                        th:classappend="${camera.active} ? 'btn-success' : 'btn-secondary'"
+                                                        th:title="${camera.active} ? 'Đang hoạt động' : 'Không hoạt động'"
+                                                        th:onclick="'toggleActive(' + ${camera.id} + ')'"
+                                                        title="Chuyển trạng thái hoạt động">
+                                                    <i th:class="${camera.active} ? 'fas fa-toggle-on' : 'fas fa-toggle-off'"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-success mb-1"
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#addStockModal"
+                                                        th:data-camera-id="${camera.id}"
+                                                        th:data-camera-name="${camera.name}"
+                                                        th:data-current-stock="${camera.stockQuantity ?: 0}"
+                                                        title="Thêm số lượng">
+                                                    <i class="fas fa-plus"></i>
+                                                </button>
+                                                <a th:href="@{'/admin/cameras/edit/' + ${camera.id}}" 
+                                                   class="btn btn-sm btn-warning mb-1"
+                                                   title="Sửa">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <button class="btn btn-sm btn-danger"
+                                                        th:onclick="'deleteCameraHard(' + ${camera.id} + ')'"
+                                                        title="Xóa cứng">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="card-body">
+                                            <h6 class="card-title" th:text="${camera.name}">Tên camera</h6>
+                                            <p class="card-text">
+                                                <small class="text-muted" th:text="${camera.category.name}">Danh mục</small><br>
+                                                <span class="text-primary fw-bold" th:text="${#numbers.formatCurrency(camera.price)}">0 ₫</span>
+                                            </p>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <small class="text-muted">ID: <span th:text="${camera.id}">1</span></small>
+                                                <span class="badge bg-info text-dark" th:text="${camera.stockQuantity}">0</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Table View -->
+                        <div id="listViewContent" class="d-none" th:unless="${#lists.isEmpty(cameras)}">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Hình ảnh</th>
+                                            <th>Tên camera</th>
+                                            <th>Danh mục</th>
+                                            <th>Giá</th>
+                                            <th>Mô tả</th>
+                                            <th>Active</th>
+                                            <th>Số lượng</th>
+                                            <th class="text-center">Thao tác</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="camera : ${cameras}">
+                                            <td th:text="${camera.id}">1</td>
+                                            <td>
+                                                <img th:src="${camera.imageUrl != null and !#strings.isEmpty(camera.imageUrl) ? (camera.imageUrl.startsWith('http') ? camera.imageUrl : (camera.imageUrl.startsWith('/images/') ? camera.imageUrl : '/images/cameras/' + camera.imageUrl)) : '/images/default-camera.svg'}" 
+                                                     th:alt="${camera.name}"
+                                                     class="camera-thumbnail"
+                                                     title="Hình ảnh sản phẩm"
+                                                     onerror="this.onerror=null;this.src='/images/default-camera.svg';"
+                                                     th:data-original-url="${camera.imageUrl}">
+                                            </td>
+                                            <td>
+                                                <strong th:text="${camera.name}">Tên camera</strong>
+                                            </td>
+                                            <td th:text="${camera.category.name}">Danh mục</td>
+                                            <td>
+                                                <span class="text-primary fw-bold" th:text="${#numbers.formatCurrency(camera.price)}">0 ₫</span>
+                                            </td>
+                                            <td>
+                                                <span th:text="${#strings.abbreviate(camera.description, 50)}">Mô tả...</span>
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-sm"
+                                                            th:classappend="${camera.active} ? 'btn-success' : 'btn-secondary'"
+                                                            th:text="${camera.active} ? 'Active' : 'Inactive'"
+                                                            th:onclick="'toggleActive(' + ${camera.id} + ')'"
+                                                            th:title="${camera.active} ? 'Đang hoạt động' : 'Không hoạt động'"
+                                                            title="Chuyển trạng thái hoạt động">
+                                                    <i th:class="${camera.active} ? 'fas fa-toggle-on' : 'fas fa-toggle-off'"></i>
+                                                </button>
+                                            </td>
+                                            <td th:text="${camera.stockQuantity}">0</td>
+                                            <td class="text-center">
+                                                <div class="btn-group" role="group">
+                                                    <button class="btn btn-sm btn-success"
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#addStockModal"
+                                                            th:data-camera-id="${camera.id}"
+                                                            th:data-camera-name="${camera.name}"
+                                                            th:data-current-stock="${camera.stockQuantity ?: 0}"
+                                                            title="Thêm số lượng">
+                                                        <i class="fas fa-plus"></i>
+                                                    </button>
+                                                    <a th:href="@{'/admin/cameras/edit/' + ${camera.id}}" 
+                                                       class="btn btn-sm btn-warning"
+                                                       title="Sửa">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <button class="btn btn-sm btn-danger"
+                                                            th:onclick="'deleteCameraHard(' + ${camera.id} + ')'"
+                                                            title="Xóa cứng">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Pagination -->
+                        <nav th:if="${totalPages > 1}" class="mt-4" aria-label="Phân trang camera">
+                            <ul class="pagination justify-content-center">
+                                <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                                    <a class="page-link" th:href="@{/admin/cameras(page=${currentPage - 1}, search=${param.search}, categoryId=${param.categoryId}, priceRange=${param.priceRange})}">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </a>
+                                </li>
+                                
+                                <li th:each="pageNum : ${#numbers.sequence(0, totalPages - 1)}" 
+                                    class="page-item" 
+                                    th:classappend="${pageNum == currentPage} ? 'active'">
+                                    <a class="page-link" 
+                                       th:href="@{/admin/cameras(page=${pageNum}, search=${param.search}, categoryId=${param.categoryId}, priceRange=${param.priceRange})}" 
+                                       th:text="${pageNum + 1}">1</a>
+                                </li>
+                                
+                                <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
+                                    <a class="page-link" th:href="@{/admin/cameras(page=${currentPage + 1}, search=${param.search}, categoryId=${param.categoryId}, priceRange=${param.priceRange})}">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="/js/script.js"></script>
+    <script>
+        // Toggle view type
+        document.getElementById('gridView').addEventListener('change', function() {
+            if (this.checked) {
+                document.getElementById('gridViewContent').classList.remove('d-none');
+                document.getElementById('listViewContent').classList.add('d-none');
+            }
+        });
+        
+        document.getElementById('listView').addEventListener('change', function() {
+            if (this.checked) {
+                document.getElementById('gridViewContent').classList.add('d-none');
+                document.getElementById('listViewContent').classList.remove('d-none');
+            }
+        });
+
+        // Delete camera function
+        function deleteCamera(cameraId) {
+            if (confirm('Bạn có chắc chắn muốn xóa camera này? Hành động này không thể hoàn tác.')) {
+                // Get CSRF token
+                const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+                const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+                
+                const headers = {
+                    'X-Requested-With': 'XMLHttpRequest'
+                };
+                
+                if (csrfToken && csrfHeader) {
+                    headers[csrfHeader] = csrfToken;
+                }
+                
+                fetch(`/admin/cameras/delete/${cameraId}`, {
+                    method: 'POST',
+                    headers: headers
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert('Xóa camera thành công!');
+                        location.reload();
+                    } else {
+                        alert('Có lỗi xảy ra khi xóa camera');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Có lỗi xảy ra khi xóa camera');
+                });
+            }
+        }
+
+        // Toggle active status
+        function toggleActive(cameraId) {
+            const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+            const headers = { 'X-Requested-With': 'XMLHttpRequest' };
+            if (csrfToken && csrfHeader) headers[csrfHeader] = csrfToken;
+            fetch(`/admin/cameras/toggle-active/${cameraId}`, {
+                method: 'POST',
+                headers: headers
+            })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('Có lỗi xảy ra khi thay đổi trạng thái');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Có lỗi xảy ra khi thay đổi trạng thái');
+            });
+        }
+
+        // Xóa cứng camera
+        function deleteCameraHard(cameraId) {
+            if (confirm('Bạn có chắc chắn muốn xóa vĩnh viễn camera này khỏi hệ thống?')) {
+                const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+                const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+                const headers = { 'X-Requested-With': 'XMLHttpRequest' };
+                if (csrfToken && csrfHeader) headers[csrfHeader] = csrfToken;
+                fetch(`/admin/cameras/delete-hard/${cameraId}`, {
+                    method: 'POST',
+                    headers: headers
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert('Xóa camera thành công!');
+                        location.reload();
+                    } else {
+                        alert('Có lỗi xảy ra khi xóa camera');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Có lỗi xảy ra khi xóa camera');
+                });
+            }
+        }
+
+        // Handle Add Stock Modal
+        document.addEventListener('DOMContentLoaded', function() {
+            const addStockModal = document.getElementById('addStockModal');
+            addStockModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                const cameraId = button.getAttribute('data-camera-id');
+                const cameraName = button.getAttribute('data-camera-name');
+                const currentStock = button.getAttribute('data-current-stock');
+                document.getElementById('modalCameraId').value = cameraId;
+                document.getElementById('modalCameraName').textContent = cameraName;
+                document.getElementById('modalCurrentStock').textContent = currentStock + ' chiếc';
+                document.getElementById('addQuantity').value = '';
+                document.getElementById('note').value = '';
+            });
+        });
+    </script>
+    <style>
+        .camera-image {
+            height: 200px;
+            object-fit: contain;
+        }
+        
+        .camera-thumbnail {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+            border-radius: 4px;
+        }
+        
+        /* Style for logout button to look like nav-link */
+        .nav-item form button.nav-link {
+            color: rgba(255,255,255,.55) !important;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            display: block;
+            width: 100%;
+            text-align: left;
+        }
+        
+        .nav-item form button.nav-link:hover {
+            color: rgba(255,255,255,.75) !important;
+        }
+    </style>
+    
+    <!-- Add Stock Modal -->
+    <div class="modal fade" id="addStockModal" tabindex="-1" aria-labelledby="addStockModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addStockModalLabel">Thêm số lượng tồn kho</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="addStockForm" th:action="@{/admin/cameras/add-stock}" method="post">
+                    <div class="modal-body">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <input type="hidden" name="cameraId" id="modalCameraId">
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Camera:</label>
+                            <p class="fw-bold" id="modalCameraName">Tên camera</p>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Tồn kho hiện tại:</label>
+                            <p class="text-info" id="modalCurrentStock">0 chiếc</p>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="addQuantity" class="form-label">Số lượng thêm:</label>
+                            <input type="number" class="form-control" name="addQuantity" id="addQuantity" 
+                                   min="1" max="1000" required>
+                            <div class="form-text">Nhập từ 1 đến 1000 chiếc</div>
+                        </div>
+                        
+                      
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-plus me-1"></i>Thêm vào kho
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
